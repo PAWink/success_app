@@ -1,7 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:ui';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:success_app/helper/helper_function.dart';
@@ -9,6 +7,7 @@ import 'package:success_app/pages/auth/login_page.dart';
 import 'package:success_app/pages/profile_page.dart';
 import 'package:success_app/pages/search_page.dart';
 import 'package:success_app/service/database_service.dart';
+import 'package:success_app/widgets/group_tile.dart';
 import 'package:success_app/widgets/widgets.dart';
 
 import '../service/auth_service.dart';
@@ -33,6 +32,15 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     gettingUserData();
+  }
+
+  // string manipulation
+  String getId(String res) {
+    return res.substring(0, res.indexOf("_"));
+  }
+
+  String getName(String res) {
+    return res.substring(res.indexOf("_") + 1);
   }
 
   gettingUserData() async {
@@ -272,26 +280,36 @@ class _HomePageState extends State<HomePage> {
 
   groupList() {
     return StreamBuilder(
-        stream: groups,
-        builder: (context, AsyncSnapshot snapshot) {
-          //make check
-          if (snapshot.hasData) {
-            if (snapshot.data['groups'] != null) {
-              if (snapshot.data['groups'].length != 0) {
-                return Text('Helloo');
-              } else {
-                return noGroupWidget();
-              }
+      stream: groups,
+      builder: (context, AsyncSnapshot snapshot) {
+        // make some checks
+        if (snapshot.hasData) {
+          if (snapshot.data['groups'] != null) {
+            if (snapshot.data['groups'].length != 0) {
+              return ListView.builder(
+                itemCount: snapshot.data['groups'].length,
+                itemBuilder: (context, index) {
+                  int reverseIndex = snapshot.data['groups'].length - index - 1;
+                  return GroupTile(
+                      groupId: getId(snapshot.data['groups'][reverseIndex]),
+                      groupName: getName(snapshot.data['groups'][reverseIndex]),
+                      userName: snapshot.data['name']);
+                },
+              );
             } else {
               return noGroupWidget();
             }
           } else {
-            return Center(
-              child: CircularProgressIndicator(
-                  color: Theme.of(context).primaryColor),
-            );
+            return noGroupWidget();
           }
-        });
+        } else {
+          return Center(
+            child: CircularProgressIndicator(
+                color: Theme.of(context).primaryColor),
+          );
+        }
+      },
+    );
   }
 
   noGroupWidget() {
