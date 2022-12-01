@@ -94,9 +94,64 @@ class _GroupInfoState extends State<GroupInfo> {
                 ],
               ),
             ),
+            memberList(),
           ],
         ),
       ),
+    );
+  }
+
+  memberList() {
+    return StreamBuilder(
+      stream: member,
+      builder: (context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          if (snapshot.data['members'] != null) {
+            if (snapshot.data['members'].length != 0) {
+              return ListView.builder(
+                itemCount: snapshot.data['members'].lenght,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Theme.of(context).primaryColor,
+                        child: Text(
+                          getName(snapshot.data['members'][index])
+                              .substring(0, 1)
+                              .toUpperCase(),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      title: Text(getName(snapshot.data['members'][index])),
+                    ),
+                  );
+                },
+              );
+            } else {
+              return const Center(
+                child: Text("No member"),
+              );
+            }
+          } else {
+            return const Center(
+              child: Text("No member"),
+            );
+          }
+        } else {
+          return Container(
+            child: CircularProgressIndicator(
+              color: Theme.of(context).primaryColor,
+            ),
+          );
+        }
+      },
     );
   }
 }
