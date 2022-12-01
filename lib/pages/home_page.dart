@@ -1,10 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:success_app/helper/helper_function.dart';
 import 'package:success_app/pages/auth/login_page.dart';
 import 'package:success_app/pages/profile_page.dart';
 import 'package:success_app/pages/search_page.dart';
+import 'package:success_app/service/database_service.dart';
 import 'package:success_app/widgets/widgets.dart';
 
 import '../service/auth_service.dart';
@@ -21,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   String email = '';
   String student = '';
   String phone = '';
+  Stream? groupPost;
 
   @override
   void initState() {
@@ -37,6 +40,14 @@ class _HomePageState extends State<HomePage> {
     await HelperFunctions.getUserNameFromSF().then((val) {
       setState(() {
         name = val!;
+      });
+    });
+    // get list stream
+    await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
+        .getUserGroups()
+        .then((snapshot) {
+      setState(() {
+        groupPost = snapshot;
       });
     });
   }
@@ -159,6 +170,69 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+      ),
+      body: groupList(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          popUpDialog(context);
+        },
+        elevation: 0,
+        backgroundColor: Theme.of(context).primaryColor,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 30,
+        ),
+      ),
+    );
+  }
+
+  popUpDialog(BuildContext context) {}
+
+  groupList() {
+    return StreamBuilder(
+        stream: groupPost,
+        builder: (context, AsyncSnapshot snapshot) {
+          //make check
+          if (snapshot.hasData) {
+            if (snapshot.data['groupPost'] != null) {
+              if (snapshot.data['groupPost'].length != 0) {
+                return Text('Helloo');
+              } else {
+                return noGroupWidget();
+              }
+            } else {
+              return noGroupWidget();
+            }
+          } else {
+            return Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).primaryColor),
+            );
+          }
+        });
+  }
+
+  noGroupWidget() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 25),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.add_circle,
+            color: Colors.grey[700],
+            size: 75,
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          const Text(
+            'You not joined any groups, tap on the add icon to create a group or also search from top search button',
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
