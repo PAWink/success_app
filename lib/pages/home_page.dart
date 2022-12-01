@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:success_app/helper/helper_function.dart';
@@ -24,6 +26,8 @@ class _HomePageState extends State<HomePage> {
   String student = '';
   String phone = '';
   Stream? groupPost;
+  bool _isLoading = false;
+  String groupName = '';
 
   @override
   void initState() {
@@ -187,7 +191,81 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  popUpDialog(BuildContext context) {}
+  popUpDialog(BuildContext context) {
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text(
+              'Create a group',
+              textAlign: TextAlign.left,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _isLoading == true
+                    ? Center(
+                        child: CircularProgressIndicator(
+                            color: Theme.of(context).primaryColor),
+                      )
+                    : TextField(
+                        onChanged: (val) {
+                          setState(() {
+                            groupName = val;
+                          });
+                        },
+                        style: const TextStyle(color: Colors.black),
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Theme.of(context).primaryColor),
+                              borderRadius: BorderRadius.circular(20)),
+                          errorBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.red),
+                              borderRadius: BorderRadius.circular(20)),
+                          focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Theme.of(context).primaryColor),
+                              borderRadius: BorderRadius.circular(20)),
+                        ),
+                      ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                    primary: Theme.of(context).primaryColor),
+                child: const Text('Cencle'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (groupName != "") {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
+                        .createGroup(name,
+                            FirebaseAuth.instance.currentUser!.uid, groupName)
+                        .whenComplete(() {
+                      _isLoading = false;
+                    });
+                    Navigator.of(context).pop();
+                    showSnackBar(
+                        context, Colors.green, "Group created successfully.");
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    primary: Theme.of(context).primaryColor),
+                child: const Text('Create'),
+              ),
+            ],
+          );
+        });
+  }
 
   groupList() {
     return StreamBuilder(
@@ -220,10 +298,15 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            Icons.add_circle,
-            color: Colors.grey[700],
-            size: 75,
+          GestureDetector(
+            onTap: () {
+              popUpDialog(context);
+            },
+            child: Icon(
+              Icons.add_circle,
+              color: Colors.grey[700],
+              size: 75,
+            ),
           ),
           const SizedBox(
             height: 20,
